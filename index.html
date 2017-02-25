@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="wt.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <div>
+        <h1 luq:title={{title}} luq:alt={{alt}}>{{title}}</h1>
+        <div>
+            <span luq:href="{{luq}}">{{message}}</span>
+            <p>{{info}}</p>
+            {{product.name}}
+        </div>
+    </div>
+    <script type="text/javascript">
+        var data = {
+          title:"test-title",
+          alt:"test-alt",
+          luq:"test-luq",
+          message:"test-message",
+          info:"test-info",
+          product:{
+            name:"衣服",
+            size:"40",
+            color:"red"
+          }
+        }
+        var body = document.querySelector('body'),
+            tree,
+            linkDWN,
+            wt = Wt(body,data);
+
+        tree = wt.getTree(body);
+        linkDWN = wt.getLinkDataToNode();
+        console.log(linkDWN);
+
+    </script>
+</body>
+
+</html>
