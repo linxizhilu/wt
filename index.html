@@ -12,12 +12,14 @@
 
 <body>
     <div>
-        <h1 luq:title={{title}} luq:alt={{alt}}>{{title}}</h1>
+        <h1 luq:title={{title}} luq:alt={{alt}} luq:color={{product.color}}>{{title}}</h1>
+        <img luq:title={{title}} luq:alt={{alt}}>
         <div>
-            <span luq:href={{luq}} luq:title={{title}} luq:alt={{alt}}>{{message}}</span>
+            <span luq:href={{luq}} luq:title={{title}} luq:alt={{alt}}>测试{{message}}测试{{info}}测试</span>
             <p>{{info}}</p>
             {{product.name}}
         </div>
+        <button type="button" id="testBtn">按钮</button>
     </div>
 
 </body>

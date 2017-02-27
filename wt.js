@@ -15,33 +15,12 @@ Object.assign(Wt.prototype, {
     _patPropDirective: /luq:([\d\w\-]+)/i,
     init: function() {
         var self = this;
-        self._setLinkDataToNode(self.data);
     },
     getTree: function() {
         return this._createInitalDomTree(this.root);
     },
     getLinkDataToNode: function() {
         return this.linkDWN;
-    },
-    _setLinkDataToNode: function(data) {
-        var self = this,
-            data = data || self.data;
-        self.linkDWN = self._createLinkDataToNode(data);
-    },
-    _createLinkDataToNode: function(data, lastKey) {
-        var self = this,
-            key,
-            data = data || self.data,
-            lastKey = lastKey || '',
-            tempObj = {};
-        for (key in data) {
-            if (typeof data[key] === 'object') {
-                tempObj[key] = arguments.callee.call(self, data[key], key + self._flag);
-            } else {
-                tempObj[key] = [];
-            }
-        }
-        return tempObj;
     },
     _createInitalDomTree: function(node, id) {
         var self = this,
@@ -72,41 +51,57 @@ Object.assign(Wt.prototype, {
             nodeValue = attrMap[i].nodeValue;
             tempObj[nodeName] = nodeValue;
             tempTree.props.push(tempObj);
-            linkObj = {};
-            linkObj.type = 'prop';
-            linkObj.key = nodeName.match(self._patPropDirective)[1];
-            linkObj.value = nodeValue;
-            linkObj.id = lastId;
-            linkKey = nodeValue.replace(self._patTextHasFlag,function(item){
-              return item.match(self._patTextNoFlag);
-            })
-            if(linkKey.indexOf('.')===-1){
-              self.linkDWN[linkKey].push(linkObj);
-            }else{
-              linkItem  = self.linkDWN;
-              linkKey.split('.').forEach(function(i,item){
-                linkItem = linkItem[item];
+            if(self._patPropDirective.test(nodeName)){
+              linkObj = {};
+              linkObj.type = 'prop';
+              linkObj.key = nodeName.match(self._patPropDirective)[1];
+              linkObj.value = nodeValue;
+              linkObj.id = lastId;
+              linkKey = nodeValue.replace(self._patTextHasFlag,function(item){
+                return item.match(self._patTextNoFlag);
               })
-            }
-            function getLinkAryKey(obj,ary){
-              var key,
-                  tempObj = obj;
-              while((key = ary.shift())!=null){
-                tempObj[key]
-
+              if(linkKey.indexOf('.')!==-1){
+                linkKey = linkKey.split('.').join('-');
               }
+              if(!self.linkDWN[linkKey]){
+                self.linkDWN[linkKey] = [];
+              }
+              self.linkDWN[linkKey].push(linkObj);
             }
-            console.log(self.linkDWN);
         }
         childNodes = node.childNodes;
         for (i = 0, len = childNodes.length; i < len; i++) {
             curNode = childNodes[i],
-                nodeValue = curNode.nodeValue,
-                tempObj = {};
+            nodeValue = curNode.nodeValue,
+            // 用来关联数据,关联数据的话，只跟text节点有关系
+            linkObj = {},
+            // 用来重新渲染dom树
+            tempObj = {};
+
             if (curNode.nodeType === 3) {
                 tempObj['type'] = 'text';
                 tempObj['index'] = i;
-                tempObj['value'] = curNode.nodeValue;
+                tempObj['value'] = nodeValue  =curNode.nodeValue;
+
+                if(self._patTextHasFlag.test(nodeValue)){
+                    linkObj.type = 'text';
+                  var hasFlagAry = nodeValue.match(self._patTextHasFlag);
+                  for(var tempkey of hasFlagAry){
+                    var noFlagMatches = tempkey.match(self._patTextNoFlag);
+                    linkObj.index = i;
+                    linkObj.key = noFlagMatches[0];
+                    linkObj.value = nodeValue;
+                    linkObj.id = lastId;
+                    linkKey = linkObj.key;
+                    if(linkKey.indexOf('.')!==-1){
+                      linkKey = linkKey.split('.').join('-');
+                    }
+                    if(!self.linkDWN[linkKey]){
+                      self.linkDWN[linkKey] = [];
+                    }
+                    self.linkDWN[linkKey].push(linkObj);
+                  }
+                }
                 tempTree.childNodes.push(tempObj);
             } else if (curNode.nodeType === 1) {
                 id = lastId + (self._flag + (tempId++));
@@ -118,21 +113,30 @@ Object.assign(Wt.prototype, {
         }
         return tempTree;
     },
+    // 通过id获取节点
     getNode: function(str) {
         var self = this,
             node,
             children,
             target,
-            ary;
-        children = self.root.children;
-        ary = str.split(self.flag);
-        node = children[parseInt(ary.shift())]
-        if (!!node) {
-            return getNode(node, ary);
-        } else {
-            return root;
+            ary,
+            len;
+        children = document.body.children;
+        if(str.indexOf(self._flag)!==-1){
+          ary = str.split(self._flag),
+          ary.shift();
+          len= ary.length;
+          while (len>0) {
+            node = children[ary.shift()];
+            children = node.children;
+            len--;
+          }
+        }else{
+          node  = self.root;
         }
+        return node;
     },
+    // 获取当前数据的存取器对象
     getObjToAccessor: function() {
         var self = this;
         return this._createObjToAccessor(self.data);
@@ -144,38 +148,18 @@ Object.assign(Wt.prototype, {
             tempData = {},
             key,
             options = {};
-
         for (key in data) {
             if (typeof data[key] !== 'object') {
-                tempData = self._defProPerty(tempData, key, data);
+                tempData = defProPerty.call(self,tempData, key, data ,self.linkDWN[key]);
             } else {
                 tempData[key] = self._createObjToAccessor(data[key]);
             }
         }
-
         return tempData;
-
     },
-    // 生成单个存取器对象
-    _defProPerty: function(obj, key, defObj, linkAry) {
-        return Object.defineProperty(obj, key, {
-            enumerable: true,
-            configurable: true,
-            set: function(newValue) {
-                var item;
-                // for(item of linkAry){
 
-                // }
-                // document.write(key+'</br>');
-                defObj[key] = newValue;
-            },
-            get: function() {
-                return defObj[key];
-            }
-        })
-    },
     // 根据iniatlDomTree重新生成dom树
-    render: function(elem, initDomTree, data) {
+    render: function(initDomTree, data) {
         if (!flag) return;
         var self = this,
             elemTree = ((function createElem(initDomTree, data) {
@@ -201,6 +185,9 @@ Object.assign(Wt.prototype, {
                             attrValue = attrValue.replace(self._patTextHasFlag, function(item) {
                                 return resolveValue.call(self,item);
                             })
+                        }else{
+                          attrKey = key;
+                          attrValue = prop[key];
                         }
                         textElem.setAttribute(attrKey, attrValue);
                     }
@@ -224,17 +211,20 @@ Object.assign(Wt.prototype, {
                 return textElem;
 
             })(initDomTree, data))
-        document.querySelector('body').remove();
-        elem.appendChild(elemTree);
+        var id = initDomTree.id;
+        var node  = self.getNode(id+'');
+        node.parentNode.replaceChild(elemTree,node);
         flag = false;
-
     }
 
 })
-function resolveValue(item) {
+function resolveValue(item,newkey,newvalue) {
   var self = this,
   key = item.match(self._patTextNoFlag)[0],
   value;
+  if(!!newkey &&key == newkey){
+    return newvalue;
+  }
   if (key.indexOf('.') !== -1) {
     var tempAry = key.split('.'),
     i = 0,
@@ -242,14 +232,45 @@ function resolveValue(item) {
     while ((val = tempAry[i++]) !== undefined) {
       if (!value) {
         value = self.data[val];
-        tempLinkObj = self.linkDWN[val];
       } else {
         value = value[val];
-        tempLinkObj = tempLinkObj[val];
       }
     }
   } else {
     value = self.data[key];
   }
   return value;
+}
+
+// 生成单个存取器对象
+function defProPerty(obj, key, defObj, linkAry) {
+  var self = this;
+    return Object.defineProperty(obj, key, {
+        enumerable: true,
+        configurable: true,
+        set: function(newValue) {
+            var item,id,node,index;
+            if(!!linkAry){
+              for(item of linkAry){
+                id = item.id;
+                node = self.getNode(id);
+                if(item.type =='prop'){
+                  node.setAttribute(item.key,newValue);
+                }else if(item.type == 'text'){
+                  index = item.index;
+                  key = item.key;
+                  nodeValue = item.value;
+                  childNode = node.childNodes[index];
+                  childNode.nodeValue = nodeValue.replace(self._patTextHasFlag,function(item){
+                    return  resolveValue.call(self,item,key,newValue)
+                  })
+                }
+              }
+            }
+            defObj[key] = newValue;
+        },
+        get: function() {
+            return defObj[key];
+        }
+    })
 }

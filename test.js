@@ -19,12 +19,19 @@
             wt = Wt(body,data);
 
         tree = wt.getTree(body);
-        wt.render(document.querySelector('html'),tree);
-        linkDWN = wt.getLinkDataToNode();
         console.log(tree);
+        wt.render(tree,wt.data);
+
         accessor = wt.getObjToAccessor();
         console.log(accessor);
-        accessor.info = 5;
+        // accessor.info = 5;
+        // accessor.title = 'title';
+        // accessor.alt = 'alt';
         // accessor.product.color="blue";
         // console.log(accessor.alt,accessor.product.color);
+        document.querySelector('#testBtn').onclick=function(){
+          accessor.info = 5;
+          accessor.title = 'title';
+          accessor.alt = 'alt';
+        }
  }
