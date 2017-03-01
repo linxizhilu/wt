@@ -20,15 +20,15 @@
 
         tree = wt.getTree(body);
         console.log(tree);
-        wt.render(tree,wt.data);
+        // wt.render(tree,wt.data);
 
         accessor = wt.getObjToAccessor();
         console.log(accessor);
-        // accessor.info = 5;
-        // accessor.title = 'title';
-        // accessor.alt = 'alt';
-        // accessor.product.color="blue";
-        // console.log(accessor.alt,accessor.product.color);
+        accessor.info = 0;
+        setInterval(function(){
+          accessor.info += 1;
+        },1000)
+
         document.querySelector('#testBtn').onclick=function(){
           accessor.info = 5;
           accessor.title = 'title';
