@@ -19,9 +19,9 @@
             wt = Wt(body,data);
 
         tree = wt.getTree(body);
-        console.log(tree);
-        // wt.render(tree,wt.data);
-
+        // console.log(tree);
+        // // wt.render(tree,wt.data);
+        //
         accessor = wt.getObjToAccessor();
         console.log(accessor);
         accessor.info = 0;
