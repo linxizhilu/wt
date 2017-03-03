@@ -12,12 +12,13 @@
 
 <body>
     <div>
-        <h1 luq:title={{title}} luq:alt={{alt}} luq:color={{product.color}}>{{title}}</h1>
-        <img luq:title={{title}} luq:alt={{alt}}>
+        <h1 luq:title="{{title}}" luq:each="{{ for( item of product)}}" luq:alt="{{alt}}" luq:color="{{product.color}}">{{title}}</h1>
+        <img title="{{title}}" luq:alt="{{alt}}" >
         <div>
-            <span luq:href={{luq}} luq:title={{title}} luq:alt={{alt}}>测试{{message}}测试{{info}}测试</span>
+            {{product.name}}的尺寸是{{product.size}}
+            <p><span luq:href="{{luq}}" luq:title="{{title}}" luq:alt="{{alt}}">测试{{message}}测试{{info}}测试</span></p>
             <p>{{info}}</p>
-            {{product.name}}
+            {{product.name}}的颜色是{{product.color}}
         </div>
         <button type="button" id="testBtn">按钮</button>
     </div>
